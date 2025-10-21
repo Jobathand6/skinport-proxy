@@ -7,18 +7,29 @@ export default async function handler(req) {
   const market_hash_name = searchParams.get("market_hash_name");
 
   if (!market_hash_name) {
-    return new Response(
-      JSON.stringify({ error: "Missing market_hash_name" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Missing market_hash_name" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // ✅ On passe par un proxy public pour contourner le 403
-  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+  // URL cible
+  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(
+    market_hash_name
+  )}`;
+
+  // Proxy AllOrigins
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
   try {
-    const res = await fetch(proxyUrl);
+    const res = await fetch(proxyUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36",
+        Accept: "application/json",
+        Referer: "https://csfloat.com/",
+      },
+    });
 
     if (!res.ok) {
       throw new Error(`Proxy Error ${res.status}`);
@@ -26,10 +37,7 @@ export default async function handler(req) {
 
     const data = await res.json();
 
-    // AllOrigins renvoie les vraies données dans "contents"
-    const parsed = JSON.parse(data.contents);
-
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
