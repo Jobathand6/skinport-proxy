@@ -13,23 +13,23 @@ export default async function handler(req) {
     );
   }
 
-  const apiUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
+  // ✅ On passe par un proxy public pour contourner le 403
+  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
   try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json",
-      },
-    });
+    const res = await fetch(proxyUrl);
 
     if (!res.ok) {
-      throw new Error(`API Error ${res.status}`);
+      throw new Error(`Proxy Error ${res.status}`);
     }
 
     const data = await res.json();
 
-    return new Response(JSON.stringify(data), {
+    // AllOrigins renvoie les vraies données dans "contents"
+    const parsed = JSON.parse(data.contents);
+
+    return new Response(JSON.stringify(parsed), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
