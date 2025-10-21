@@ -13,29 +13,27 @@ export default async function handler(req) {
     });
   }
 
-  const apiUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
+  // Proxy relais pour contourner le blocage Cloudflare
+  const proxyUrl = "https://api.allorigins.win/get?url=";
+  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
+  const finalUrl = proxyUrl + encodeURIComponent(targetUrl);
 
   try {
-    const res = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Referer": "https://csfloat.com/",
-        "Origin": "https://csfloat.com",
-      },
-    });
+    const res = await fetch(finalUrl);
 
     if (!res.ok) {
-      const text = await res.text();
-      return new Response(JSON.stringify({ error: `API Error ${res.status}`, details: text }), {
+      return new Response(JSON.stringify({ error: `Proxy Error ${res.status}` }), {
         status: res.status,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     const data = await res.json();
-    return new Response(JSON.stringify(data), {
+
+    // L’API AllOrigins encapsule le vrai contenu dans data.contents
+    const parsed = JSON.parse(data.contents);
+
+    return new Response(JSON.stringify(parsed), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
