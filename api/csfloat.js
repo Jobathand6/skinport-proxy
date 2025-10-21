@@ -13,26 +13,28 @@ export default async function handler(req) {
     });
   }
 
-  // URL cible
-  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(
-    market_hash_name
-  )}`;
+  const cookie = process.env.CSFLOAT_COOKIE;
 
-  // Proxy AllOrigins
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+  if (!cookie) {
+    return new Response(JSON.stringify({ error: "Missing CSFLOAT_COOKIE env var" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const apiUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
 
   try {
-    const res = await fetch(proxyUrl, {
+    const res = await fetch(apiUrl, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36",
-        Accept: "application/json",
-        Referer: "https://csfloat.com/",
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json",
+        "Cookie": `session=${cookie}`,
       },
     });
 
     if (!res.ok) {
-      throw new Error(`Proxy Error ${res.status}`);
+      throw new Error(`CSFloat API Error ${res.status}`);
     }
 
     const data = await res.json();
