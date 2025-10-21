@@ -18,13 +18,17 @@ export default async function handler(req) {
   try {
     const res = await fetch(apiUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
         "Accept": "application/json",
+        "Origin": "https://skinport-proxy.vercel.app",
       },
     });
 
     if (!res.ok) {
-      throw new Error(`API Error ${res.status}`);
+      return new Response(JSON.stringify({ error: `API Error ${res.status}` }), {
+        status: res.status,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const data = await res.json();
