@@ -7,37 +7,37 @@ export default async function handler(req) {
   const market_hash_name = searchParams.get("market_hash_name");
 
   if (!market_hash_name) {
-    return new Response(JSON.stringify({ error: "Missing market_hash_name" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing market_hash_name" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
-  // Proxy relais pour contourner le blocage Cloudflare
-  const proxyUrl = "https://api.allorigins.win/get?url=";
-  const targetUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
-  const finalUrl = proxyUrl + encodeURIComponent(targetUrl);
+  const apiUrl = `https://csfloat.com/api/v1/listings?market_hash_name=${encodeURIComponent(market_hash_name)}`;
 
   try {
-    const res = await fetch(finalUrl);
+    const res = await fetch(apiUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json",
+      },
+    });
 
     if (!res.ok) {
-      return new Response(JSON.stringify({ error: `Proxy Error ${res.status}` }), {
-        status: res.status,
-        headers: { "Content-Type": "application/json" },
-      });
+      throw new Error(`API Error ${res.status}`);
     }
 
     const data = await res.json();
 
-    // L’API AllOrigins encapsule le vrai contenu dans data.contents
-    const parsed = JSON.parse(data.contents);
-
-    return new Response(JSON.stringify(parsed), {
-      headers: { "Content-Type": "application/json" },
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
