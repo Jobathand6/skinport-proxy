@@ -27,9 +27,10 @@ export default async function handler(req) {
   try {
     const res = await fetch(apiUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "Accept": "application/json",
-        "Cookie": `session=${cookie}`,
+        // 👇 Correction ici : on envoie le cookie tel qu’il est stocké, sans le préfixe “session=”
+        "Cookie": cookie,
       },
     });
 
